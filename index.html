@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8x8 Adaptive Grid</title>
+    <style>
+        body {
+            margin: 0;
+            background: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #textInput {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            height: 80px;
+            padding: 10px;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            background: #f4f4f4;
+            color: #333;
+            font-family: Arial, sans-serif;
+            resize: none;
+            outline: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 10; /* Ensures it is above the canvas */
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #downloadBtn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #downloadBtn:hover {
+            background: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <textarea id="textInput" placeholder="Type your text here..." autofocus></textarea>
+    <canvas id="textCanvas"></canvas>
+    <button id="downloadBtn">Download as PNG</button>
+    <script>
+        // Placeholder for the font dictionary
+        // Paste your 8x8 font dictionary here
+       const font = {
+    "A": [
+        "00111100",
+        "01000010",
+        "01000010",
+        "01111110",
+        "01000010",
+        "01000010",
+        "01000010",
+        "00000000"
+    ],
+    "B": [
+        "01111100",
+        "01000010",
+        "01000010",
+        "01111100",
+        "01000010",
+        "01000010",
+        "01111100",
+        "00000000"
+    ],
+    "C": [
+        "00111100",
+        "01000010",
+        "01000000",
+        "01000000",
+        "01000000",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "D": [
+        "01111000",
+        "01000100",
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000100",
+        "01111000",
+        "00000000"
+    ],
+    "E": [
+        "01111110",
+        "01000000",
+        "01000000",
+        "01111100",
+        "01000000",
+        "01000000",
+        "01111110",
+        "00000000"
+    ],
+    "F": [
+        "01111110",
+        "01000000",
+        "01000000",
+        "01111100",
+        "01000000",
+        "01000000",
+        "01000000",
+        "00000000"
+    ],
+    "G": [
+        "00111100",
+        "01000010",
+        "01000000",
+        "01001110",
+        "01000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "H": [
+        "01000010",
+        "01000010",
+        "01000010",
+        "01111110",
+        "01000010",
+        "01000010",
+        "01000010",
+        "00000000"
+    ],
+    "I": [
+        "00111100",
+        "00001000",
+        "00001000",
+        "00001000",
+        "00001000",
+        "00001000",
+        "00111100",
+        "00000000"
+    ],
+    "J": [
+        "00000110",
+        "00000010",
+        "00000010",
+        "00000010",
+        "01000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "K": [
+        "01000010",
+        "01000100",
+        "01001000",
+        "01110000",
+        "01001000",
+        "01000100",
+        "01000010",
+        "00000000"
+    ],
+    "L": [
+        "01000000",
+        "01000000",
+        "01000000",
+        "01000000",
+        "01000000",
+        "01000000",
+        "01111110",
+        "00000000"
+    ],
+    "M": [
+        "01000010",
+        "01100110",
+        "01011010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "00000000"
+    ],
+    "N": [
+        "01000010",
+        "01100010",
+        "01010010",
+        "01001010",
+        "01000110",
+        "01000010",
+        "01000010",
+        "00000000"
+    ],
+    "O": [
+        "00111100",
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "P": [
+        "01111100",
+        "01000010",
+        "01000010",
+        "01111100",
+        "01000000",
+        "01000000",
+        "01000000",
+        "00000000"
+    ],
+    "Q": [
+        "00111100",
+        "01000010",
+        "01000010",
+        "01000010",
+        "01001010",
+        "01000100",
+        "00111010",
+        "00000000"
+    ],
+    "R": [
+        "01111100",
+        "01000010",
+        "01000010",
+        "01111100",
+        "01001000",
+        "01000100",
+        "01000010",
+        "00000000"
+    ],
+    "S": [
+        "00111100",
+        "01000010",
+        "01000000",
+        "00111100",
+        "00000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "T": [
+        "01111110",
+        "00001000",
+        "00001000",
+        "00001000",
+        "00001000",
+        "00001000",
+        "00001000",
+        "00000000"
+    ],
+    "U": [
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "V": [
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "00100100",
+        "00011000",
+        "00000000"
+    ],
+    "W": [
+        "01000010",
+        "01000010",
+        "01000010",
+        "01000010",
+        "01011010",
+        "01100110",
+        "01000010",
+        "00000000"
+    ],
+    "X": [
+        "01000010",
+        "01000010",
+        "00100100",
+        "00011000",
+        "00100100",
+        "01000010",
+        "01000010",
+        "00000000"
+    ],
+    "Y": [
+        "01000010",
+        "01000010",
+        "00100100",
+        "00011000",
+        "00001000",
+        "00001000",
+        "00001000",
+        "00000000"
+    ],
+    "Z": [
+        "01111110",
+        "00000010",
+        "00000100",
+        "00001000",
+        "00010000",
+        "00100000",
+        "01111110",
+        "00000000"
+    ],
+    "0": [
+        "00111100",
+        "01000010",
+        "01000110",
+        "01001010",
+        "01010010",
+        "01100010",
+        "00111100",
+        "00000000"
+    ],
+    "1": [
+        "00001000",
+        "00011000",
+        "00101000",
+        "00001000",
+        "00001000",
+        "00001000",
+        "00111110",
+        "00000000"
+    ],
+    "2": [
+        "00111100",
+        "01000010",
+        "00000010",
+        "00000100",
+        "00001000",
+        "00010000",
+        "01111110",
+        "00000000"
+    ],
+    "3": [
+        "00111100",
+        "01000010",
+        "00000010",
+        "00011100",
+        "00000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "4": [
+        "00000100",
+        "00001100",
+        "00010100",
+        "00100100",
+        "01111110",
+        "00000100",
+        "00000100",
+        "00000000"
+    ],
+    "5": [
+        "01111110",
+        "01000000",
+        "01000000",
+        "01111100",
+        "00000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "6": [
+        "00111100",
+        "01000010",
+        "01000000",
+        "01111100",
+        "01000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "7": [
+        "01111110",
+        "00000010",
+        "00000100",
+        "00001000",
+        "00010000",
+        "00100000",
+        "00100000",
+        "00000000"
+    ],
+    "8": [
+        "00111100",
+        "01000010",
+        "01000010",
+        "00111100",
+        "01000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    "9": [
+        "00111100",
+        "01000010",
+        "01000010",
+        "00111110",
+        "00000010",
+        "01000010",
+        "00111100",
+        "00000000"
+    ],
+    " ": [
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000",
+        "00000000"
+    ]
+};
+        // Canvas and input setup
+        const canvas = document.getElementById("textCanvas");
+        const ctx = canvas.getContext("2d");
+        const input = document.getElementById("textInput");
+        const downloadBtn = document.getElementById("downloadBtn");
+
+        // LEGO-like base colors
+        const baseColors = ["#FF5733", "#33FF57", "#3357FF", "#FFFF33", "#FF33FF"];
+
+        // Function to get a random LEGO-like base color
+        function getRandomBaseColor() {
+            return baseColors[Math.floor(Math.random() * baseColors.length)];
+        }
+
+        // Function to draw a single character from the font dictionary
+        function drawCharacter(char, startX, startY, pixelSize) {
+            const charGrid = font[char.toUpperCase()] || font[" "]; // Fallback to space if character not found
+
+            // Loop through the 8x8 grid and draw the character pixels
+            for (let row = 0; row < charGrid.length; row++) {
+                for (let col = 0; col < charGrid[row].length; col++) {
+                    if (charGrid[row][col] === "1") {
+                        // Randomly assign a LEGO-like base color to the pixel
+                        ctx.fillStyle = getRandomBaseColor();
+                        ctx.fillRect(
+                            startX + col * pixelSize,
+                            startY + row * pixelSize,
+                            pixelSize,
+                            pixelSize
+                        );
+                    }
+                }
+            }
+
+            // Draw the 8x8 grid backdrop
+            ctx.strokeStyle = "#333"; // Grid line color
+            ctx.lineWidth = 1; // Grid line width
+            for (let x = 0; x <= 8; x++) {
+                ctx.beginPath();
+                ctx.moveTo(startX + x * pixelSize, startY);
+                ctx.lineTo(startX + x * pixelSize, startY + 8 * pixelSize);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= 8; y++) {
+                ctx.beginPath();
+                ctx.moveTo(startX, startY + y * pixelSize);
+                ctx.lineTo(startX + 8 * pixelSize, startY + y * pixelSize);
+                ctx.stroke();
+            }
+        }
+
+        // Function to render multiple lines of text
+        function drawText(lines) {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const lineCount = lines.length;
+            const pixelSize = Math.min(
+                canvas.width / (Math.max(...lines.map(line => line.length)) * 8),
+                canvas.height / (lineCount * 8)
+            ); // Adaptive pixel size
+
+            const totalTextHeight = lineCount * 8 * pixelSize;
+            let startY = (canvas.height - totalTextHeight) / 2; // Center vertically
+
+            for (const line of lines) {
+                const lineWidth = line.length * 8 * pixelSize;
+                let startX = (canvas.width - lineWidth) / 2; // Center horizontally
+
+                for (const char of line) {
+                    drawCharacter(char, startX, startY, pixelSize);
+                    startX += 8 * pixelSize; // Move to the next character position
+                }
+
+                startY += 8 * pixelSize; // Move to the next line
+            }
+        }
+
+        // Input event listener
+        input.addEventListener("input", (e) => {
+            const lines = e.target.value.split("\n");
+            drawText(lines);
+        });
+
+        input.addEventListener("focus", () => {
+            canvas.style.pointerEvents = "none"; // Temporarily disable canvas interactions
+        });
+
+        input.addEventListener("blur", () => {
+            canvas.style.pointerEvents = "auto"; // Re-enable canvas interactions
+        });
+
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const lines = input.value.split("\n") || ["Type Here!"];
+            drawText(lines);
+        }
+
+        // Download canvas as PNG
+        downloadBtn.addEventListener("click", () => {
+            const link = document.createElement("a");
+            link.download = "8x8_text.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        });
+
+        // Initial setup
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+    </script>
+</body>
+</html>
